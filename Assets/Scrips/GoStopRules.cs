@@ -2,17 +2,291 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GoStopRules : MonoBehaviour
+public class GoStopRules
 {
-    // Start is called before the first frame update
-    void Start()
+    //점수 계산
+    public List<SpecialCombo> CalcurateScore(List<List<Card>> playerAcquiredCards, out int playerScore) 
     {
-        
+        int score = 0;
+        List<SpecialCombo> combos = new List<SpecialCombo>();
+        for (int numofjokbo = 0; numofjokbo < Jokbo.GetNames(typeof(Jokbo)).Length; numofjokbo++)
+        {
+            switch ((Jokbo)numofjokbo) //족보 먹은패 체크
+            {
+                case Jokbo.GWONG:
+                    if (playerAcquiredCards[numofjokbo].Count == 3) //삼광
+                    {
+                        for (int B_search = 0; B_search < playerAcquiredCards[numofjokbo].Count; B_search++)
+                        {
+                            if (playerAcquiredCards[numofjokbo][B_search].Get_month() == 12)
+                            {
+                                combos.Add(SpecialCombo.GWONG3B);
+                                score += 2;
+                            }
+                            else
+                            {
+                                combos.Add(SpecialCombo.GWONG3);
+                                score += 3;
+                            }
+                        }
+                    }
+                    else if (playerAcquiredCards[numofjokbo].Count == 4) //사광
+                    {
+                        combos.Add(SpecialCombo.GWONG4);
+                        score += 4;
+                    }
+                    else if (playerAcquiredCards[numofjokbo].Count == 5) //오광
+                    {
+                        combos.Add(SpecialCombo.GWONG5);
+                        score += 15;
+                    }
+                    break;
+                case Jokbo.GODORI:
+                    if (playerAcquiredCards[numofjokbo].Count == 3)
+                    {
+                        combos.Add(SpecialCombo.GODORI);
+                        score += 5;
+                    }
+                    break;
+                case Jokbo.HONGDAN:
+                    if (playerAcquiredCards[numofjokbo].Count == 3)
+                    {
+                        combos.Add(SpecialCombo.HONGDAN);
+                        score += 3;
+                    }
+                    break;
+                case Jokbo.CHODAN:
+                    if (playerAcquiredCards[numofjokbo].Count == 4)
+                    {
+                        combos.Add(SpecialCombo.CHODAN);
+                        score += 3;
+                    }
+                    break;
+                case Jokbo.CHUNGDAN:
+                    if (playerAcquiredCards[numofjokbo].Count == 3)
+                    {
+                        combos.Add(SpecialCombo.CHUNGDAN);
+                        score += 3;
+                    }
+                    break;
+                case Jokbo.PI:
+                    int piscore = 0;
+                    for (int piofnum = 0; piofnum < playerAcquiredCards[numofjokbo].Count; piofnum++)
+                    {
+                        if (playerAcquiredCards[numofjokbo][piofnum].Get_ssangpi())
+                            piscore += 2;
+                        else
+                            piscore += 1;
+                    }
+                    if (piscore >= 10)
+                    {
+                        score = piscore - 9;
+                    }
+                    break;
+                case Jokbo.YEOLGGUT:
+                    int GGUTscore = playerAcquiredCards[(int)Jokbo.YEOLGGUT].Count + playerAcquiredCards[(int)Jokbo.GODORI].Count;
+                    if (GGUTscore >= 5)
+                    {
+                        score = GGUTscore - 4;
+                    }
+                    break;
+            } //족보 먹은패 체크
+        }
+        int TTIscore = playerAcquiredCards[(int)Jokbo.CHODAN].Count + playerAcquiredCards[(int)Jokbo.CHUNGDAN].Count + playerAcquiredCards[(int)Jokbo.HONGDAN].Count; //청단 홍단 초단 띠의 수를 더함
+        if (TTIscore >= 5)
+        {
+            score = TTIscore - 4;
+        }
+        playerScore = score;
+        return combos;
     }
 
-    // Update is called once per frame
-    void Update()
+    //턴 종료한 유저기준으로 상대먹은 카드를 보고 상대박을 셋해준다.
+    public List<Bak> AddTurnWaitPlayerBak(List<List<Card>> turnendPlayerCards, List<List<Card>> turnwaitPlayerCards) 
     {
-        
+        List<Bak> bak_ptr = new List<Bak>();
+        for (int numofjokbo = 0; numofjokbo < Jokbo.GetNames(typeof(Jokbo)).Length; numofjokbo++)
+        {
+            switch ((Jokbo)numofjokbo)
+            {
+                case Jokbo.GWONG:
+                    if (turnendPlayerCards[numofjokbo].Count >= 3)
+                    {
+                        if (turnwaitPlayerCards[numofjokbo].Count == 0)
+                            bak_ptr.Add(Bak.GWANG);
+                    }
+                    break;
+                case Jokbo.YEOLGGUT:
+                    if (turnendPlayerCards[numofjokbo].Count + turnendPlayerCards[(int)Jokbo.GODORI].Count >= 7)
+                    {
+                        if (turnwaitPlayerCards[numofjokbo].Count + turnwaitPlayerCards[(int)Jokbo.GODORI].Count == 0)
+                            bak_ptr.Add(Bak.MUNG);
+                    }
+                    break;
+                case Jokbo.CHODAN:
+                    if (turnendPlayerCards[numofjokbo].Count + turnendPlayerCards[(int)Jokbo.CHUNGDAN].Count + turnendPlayerCards[(int)Jokbo.HONGDAN].Count >= 5)
+                    {
+                        if (turnwaitPlayerCards[numofjokbo].Count + turnwaitPlayerCards[(int)Jokbo.CHUNGDAN].Count + turnwaitPlayerCards[(int)Jokbo.HONGDAN].Count == 0)
+                            bak_ptr.Add(Bak.TTI);
+                    }
+                    break;
+                case Jokbo.PI:
+                    if (turnendPlayerCards[numofjokbo].Count >= 10)
+                    {
+                        if (turnwaitPlayerCards[numofjokbo].Count > 0 && turnwaitPlayerCards[numofjokbo].Count < 6)
+                            bak_ptr.Add(Bak.PI);
+                    }
+                    break;
+            }
+        }
+        return bak_ptr;
     }
+
+    //턴 종료한 유저가 박이 있었다면 제거
+    public List<Bak> RemoveTrunEndPlayerBak(List<List<Card>> turnendPlayerCards, List<Bak> turnendPlayerBaks) 
+    {
+        List<Bak> bak_ptr = new List<Bak>();
+
+        for (int numofbak = turnendPlayerBaks.Count - 1; numofbak >= 0; numofbak--)
+        {
+            switch (turnendPlayerBaks[numofbak])
+            {
+                case Bak.GWANG:
+                    if (turnendPlayerCards[(int)Jokbo.GWONG].Count == 0)
+                        turnendPlayerBaks.RemoveAt(numofbak);
+                    break;
+                case Bak.MUNG:
+                    if (turnendPlayerCards[(int)Jokbo.GODORI].Count + turnendPlayerCards[(int)Jokbo.YEOLGGUT].Count == 0)
+                        turnendPlayerBaks.RemoveAt(numofbak);
+                    break;
+                case Bak.TTI:
+                    if (turnendPlayerCards[(int)Jokbo.CHODAN].Count + turnendPlayerCards[(int)Jokbo.CHUNGDAN].Count + turnendPlayerCards[(int)Jokbo.HONGDAN].Count == 0)
+                        turnendPlayerBaks.RemoveAt(numofbak);
+                    break;
+                case Bak.PI:
+                    if (turnendPlayerCards[(int)Jokbo.PI].Count > 0 && turnendPlayerCards[(int)Jokbo.PI].Count < 6)
+                        turnendPlayerBaks.RemoveAt(numofbak);
+                    break;
+            }
+        }
+
+        return turnendPlayerBaks;
+    }
+
+
+    public List<TurnEndState> TurnEndBottomCardsSet(Card playHandCard, Card deckDrowCard, ref Player turnendPlayer, ref Player turnwaitPlayer, ref List<List<Card>> bottomCard)
+    {
+        List<TurnEndState> turnEndStates = new List<TurnEndState>();
+        for (int numofbottom = bottomCard.Count - 1; numofbottom >= 0; numofbottom--)
+        {
+            //따닥 DDADAK
+            if (bottomCard[numofbottom].Count == 2) 
+            {
+                if (playHandCard.Get_month() == deckDrowCard.Get_month() && playHandCard.Get_month() == bottomCard[numofbottom][0].Get_month())
+                {
+                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                    turnendPlayer.AddAcquiredCard(playHandCard);
+                    turnendPlayer.AddAcquiredCard(deckDrowCard);
+                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    if (playHandCard.Get_month() == 5)
+                        turnEndStates.Add(TurnEndState.GOKJIN);
+                    turnEndStates.Add(TurnEndState.DDADAK);
+                    playHandCard = null;
+                    deckDrowCard = null;
+                    bottomCard.RemoveAt(numofbottom);
+                }
+                return turnEndStates;
+            }
+
+            //뻑 BALK
+            if (playHandCard.Get_month() == deckDrowCard.Get_month() && playHandCard.Get_month() == bottomCard[numofbottom][0].Get_month()) 
+            {
+                bottomCard[numofbottom].Add(playHandCard);
+                bottomCard[numofbottom].Add(deckDrowCard);
+                turnEndStates.Add(TurnEndState.BALK);
+                playHandCard = null;
+                deckDrowCard = null;
+                return turnEndStates;
+            }
+
+            //뻑먹기 GET_BALK
+            if (bottomCard[numofbottom].Count == 3) 
+            {
+                if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month())
+                {
+                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                    turnendPlayer.AddAcquiredCard(playHandCard);
+                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    playHandCard = null;
+                    bottomCard.RemoveAt(numofbottom);
+                    turnEndStates.Add(TurnEndState.GET_BALK);
+                }
+                else if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
+                {
+                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                    turnendPlayer.AddAcquiredCard(deckDrowCard);
+                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    deckDrowCard = null;
+                    bottomCard.RemoveAt(numofbottom);
+                    turnEndStates.Add(TurnEndState.GET_BALK);
+                }
+            }
+
+            //일반 먹기
+            else if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month()) 
+            {
+                turnendPlayer.AddAcquiredCard(playHandCard);
+                turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                playHandCard = null;
+                bottomCard.RemoveAt(numofbottom);
+            }
+
+            //일반먹기
+            else if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month()) 
+            {
+                turnendPlayer.AddAcquiredCard(deckDrowCard);
+                turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                deckDrowCard = null;
+                bottomCard.RemoveAt(numofbottom);
+            }
+        }
+        if (deckDrowCard != null && playHandCard != null) 
+        {
+            //쪽 KISS
+            if (playHandCard.Get_month() == deckDrowCard.Get_month())
+            {
+                turnendPlayer.AddAcquiredCard(playHandCard);
+                turnendPlayer.AddAcquiredCard(deckDrowCard);
+                turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                turnEndStates.Add(TurnEndState.KISS);
+                playHandCard = null;
+                deckDrowCard = null;
+            }
+        }
+
+        //처리하지 못한카드들 바닥에 두기
+        if(playHandCard!=null)
+        {
+            List<Card> ptr = new List<Card>();
+            ptr.Add(playHandCard);
+            bottomCard.Add(ptr);
+            playHandCard = null;
+        }
+        if (deckDrowCard != null)
+        {
+            List<Card> ptr = new List<Card>();
+            ptr.Add(deckDrowCard);
+            bottomCard.Add(ptr);
+            deckDrowCard = null;
+        }
+
+        //싹쓸 CLEAR
+        if (bottomCard.Count == 0) 
+        {
+            turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+            turnEndStates.Add(TurnEndState.CLEAR);
+        }
+        return turnEndStates;
+    }
+
 }
