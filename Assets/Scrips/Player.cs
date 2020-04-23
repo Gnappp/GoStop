@@ -2,15 +2,13 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-
-
-
 public class Player
 {
-    private string name;
+    public string name;
     private List<Bak> Bakstates; //현재상태를 저장(고박, 피박, 광박,멍박, 띠박)
     private int score; //점수계산을 받아 입력받음
     private int goNum; //플레이어 고 수
+    private bool[] shake;
     private int multipleScore; //플레이어의 배수
     private int piscore;
     private List<Card> handCards; //현재 플레이어 손패
@@ -23,6 +21,7 @@ public class Player
         score = 0;
         piscore = 0; //피 갯수를 계산하고 출력하여하기 때문에 변수만듬
         goNum = 0;
+        shake = new bool[2]; shake[0] = false; shake[1] = false;
         multipleScore = 1;
         handCards = new List<Card>();
         acquiredCards = new List<List<Card>>();
@@ -89,6 +88,7 @@ public class Player
     public string Get_name() { return name; }
 
     public void Set_score(int _score) { score = _score; }
+    
 
 
 

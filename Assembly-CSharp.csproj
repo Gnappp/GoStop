@@ -67,6 +67,7 @@
     <Compile Include="Assets\Scrips\GoStopManager.cs" />
     <Compile Include="Assets\Scrips\GoStopRules.cs" />
     <Compile Include="Assets\Scrips\Player.cs" />
+    <Compile Include="Assets\Scrips\PlayerClient.cs" />
     <Reference Include="Unity.Timeline.Editor">
       <HintPath>C:/Users/PCx/GoStop/Library/ScriptAssemblies/Unity.Timeline.Editor.dll</HintPath>
     </Reference>

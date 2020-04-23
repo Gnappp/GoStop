@@ -5,7 +5,7 @@ using UnityEngine;
 public class GoStopRules
 {
     //점수 계산
-    public List<SpecialCombo> CalcurateScore(List<List<Card>> playerAcquiredCards, out int playerScore) 
+    public List<SpecialCombo> CalcurateScore(List<List<Card>> playerAcquiredCards, out int playerScore)
     {
         int score = 0;
         List<SpecialCombo> combos = new List<SpecialCombo>();
@@ -102,7 +102,7 @@ public class GoStopRules
     }
 
     //턴 종료한 유저기준으로 상대먹은 카드를 보고 상대박을 셋해준다.
-    public List<Bak> AddTurnWaitPlayerBak(List<List<Card>> turnendPlayerCards, List<List<Card>> turnwaitPlayerCards) 
+    public List<Bak> AddTurnWaitPlayerBak(List<List<Card>> turnendPlayerCards, List<List<Card>> turnwaitPlayerCards)
     {
         List<Bak> bak_ptr = new List<Bak>();
         for (int numofjokbo = 0; numofjokbo < Jokbo.GetNames(typeof(Jokbo)).Length; numofjokbo++)
@@ -143,7 +143,7 @@ public class GoStopRules
     }
 
     //턴 종료한 유저가 박이 있었다면 제거
-    public List<Bak> RemoveTrunEndPlayerBak(List<List<Card>> turnendPlayerCards, List<Bak> turnendPlayerBaks) 
+    public List<Bak> RemoveTrunEndPlayerBak(List<List<Card>> turnendPlayerCards, List<Bak> turnendPlayerBaks)
     {
         List<Bak> bak_ptr = new List<Bak>();
 
@@ -175,19 +175,20 @@ public class GoStopRules
 
 
     public List<TurnEndState> TurnEndBottomCardsSet(Card playHandCard, Card deckDrowCard, ref Player turnendPlayer, ref Player turnwaitPlayer, ref List<List<Card>> bottomCard)
+    //--두장이상일때 선택하게하기--
     {
         List<TurnEndState> turnEndStates = new List<TurnEndState>();
         for (int numofbottom = bottomCard.Count - 1; numofbottom >= 0; numofbottom--)
         {
             //따닥 DDADAK
-            if (bottomCard[numofbottom].Count == 2) 
+            if (bottomCard[numofbottom].Count == 2)
             {
                 if (playHandCard.Get_month() == deckDrowCard.Get_month() && playHandCard.Get_month() == bottomCard[numofbottom][0].Get_month())
                 {
                     turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
                     turnendPlayer.AddAcquiredCard(playHandCard);
                     turnendPlayer.AddAcquiredCard(deckDrowCard);
-                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
                     if (playHandCard.Get_month() == 5)
                         turnEndStates.Add(TurnEndState.GOKJIN);
                     turnEndStates.Add(TurnEndState.DDADAK);
@@ -195,69 +196,93 @@ public class GoStopRules
                     deckDrowCard = null;
                     bottomCard.RemoveAt(numofbottom);
                 }
-                return turnEndStates;
+                break;
             }
 
             //뻑 BALK
-            if (playHandCard.Get_month() == deckDrowCard.Get_month() && playHandCard.Get_month() == bottomCard[numofbottom][0].Get_month()) 
+            if (playHandCard != null && deckDrowCard != null)
             {
-                bottomCard[numofbottom].Add(playHandCard);
-                bottomCard[numofbottom].Add(deckDrowCard);
-                turnEndStates.Add(TurnEndState.BALK);
-                playHandCard = null;
-                deckDrowCard = null;
-                return turnEndStates;
+                if (playHandCard.Get_month() == deckDrowCard.Get_month() && playHandCard.Get_month() == bottomCard[numofbottom][0].Get_month())
+                {
+                    bottomCard[numofbottom].Add(playHandCard);
+                    bottomCard[numofbottom].Add(deckDrowCard);
+                    turnEndStates.Add(TurnEndState.BALK);
+                    playHandCard = null;
+                    deckDrowCard = null;
+                    break;
+                }
             }
 
-            //뻑먹기 GET_BALK
-            if (bottomCard[numofbottom].Count == 3) 
+            //먹기(손패)
+            if (playHandCard != null)
             {
-                if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month())
+                if (bottomCard[numofbottom].Count == 3)//뻑먹기 GET_BALK
                 {
-                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                    if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month())
+                    {
+                        turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                        turnendPlayer.AddAcquiredCard(playHandCard);
+                        turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                        playHandCard = null;
+                        bottomCard.RemoveAt(numofbottom);
+                        turnEndStates.Add(TurnEndState.GET_BALK);
+                    }
+                }
+                else if (bottomCard[numofbottom].Count == 2) //두장이상일때 선택
+                {
+                    turnEndStates.Add(TurnEndState.P_SELECT_CARD);
+
+                    playHandCard = null;
+                }
+                if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month()) //일반
+                {
                     turnendPlayer.AddAcquiredCard(playHandCard);
-                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
                     playHandCard = null;
                     bottomCard.RemoveAt(numofbottom);
-                    turnEndStates.Add(TurnEndState.GET_BALK);
+                }
+            }
+
+
+            //먹기(드로우)
+            if (deckDrowCard != null)
+            {
+                if (bottomCard[numofbottom].Count == 3)//뻑먹기 GET_BALK
+                {
+                    if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
+                    {
+                        turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                        turnendPlayer.AddAcquiredCard(deckDrowCard);
+                        turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                        deckDrowCard = null;
+                        bottomCard.RemoveAt(numofbottom);
+                        turnEndStates.Add(TurnEndState.GET_BALK);
+                    }
+                }
+                else if (bottomCard[numofbottom].Count == 2) //두장이상일때 선택
+                {
+                    turnEndStates.Add(TurnEndState.D_SELECT_CARD);
+
+                    deckDrowCard = null;
                 }
                 else if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
                 {
-                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
                     turnendPlayer.AddAcquiredCard(deckDrowCard);
-                    turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                    turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
                     deckDrowCard = null;
                     bottomCard.RemoveAt(numofbottom);
-                    turnEndStates.Add(TurnEndState.GET_BALK);
                 }
             }
-
-            //일반 먹기
-            else if (bottomCard[numofbottom][0].Get_month() == playHandCard.Get_month()) 
-            {
-                turnendPlayer.AddAcquiredCard(playHandCard);
-                turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
-                playHandCard = null;
-                bottomCard.RemoveAt(numofbottom);
-            }
-
-            //일반먹기
-            else if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month()) 
-            {
-                turnendPlayer.AddAcquiredCard(deckDrowCard);
-                turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
-                deckDrowCard = null;
-                bottomCard.RemoveAt(numofbottom);
-            }
         }
-        if (deckDrowCard != null && playHandCard != null) 
+
+        if (deckDrowCard != null && playHandCard != null)
         {
             //쪽 KISS
             if (playHandCard.Get_month() == deckDrowCard.Get_month())
             {
                 turnendPlayer.AddAcquiredCard(playHandCard);
                 turnendPlayer.AddAcquiredCard(deckDrowCard);
-                turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
                 turnEndStates.Add(TurnEndState.KISS);
                 playHandCard = null;
                 deckDrowCard = null;
@@ -265,7 +290,7 @@ public class GoStopRules
         }
 
         //처리하지 못한카드들 바닥에 두기
-        if(playHandCard!=null)
+        if (playHandCard != null)
         {
             List<Card> ptr = new List<Card>();
             ptr.Add(playHandCard);
@@ -281,12 +306,79 @@ public class GoStopRules
         }
 
         //싹쓸 CLEAR
-        if (bottomCard.Count == 0) 
+        if (bottomCard.Count == 0)
         {
-            turnwaitPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+            turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
             turnEndStates.Add(TurnEndState.CLEAR);
         }
+
         return turnEndStates;
     }
+    
+    public List<TurnEndState> TurnEndBottomCardsSet(List<Card> playHandCard, Card deckDrowCard, ref Player turnendPlayer, ref Player turnwaitPlayer, ref List<List<Card>> bottomCard)
+    {
+        List<TurnEndState> turnEndStates = new List<TurnEndState>();
 
+        for (int numofbottom = bottomCard.Count - 1; numofbottom >= 0; numofbottom--)
+        {
+            if(bottomCard[numofbottom][0].Get_month()==playHandCard[0].Get_month()) //폭탄
+            {
+                turnEndStates.Add(TurnEndState.BOOM);
+                turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                turnendPlayer.AddAcquiredCard(playHandCard);
+                turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                playHandCard = null;
+                bottomCard.RemoveAt(numofbottom);
+            }
+
+            if (deckDrowCard != null)
+            {
+                if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
+                {
+                    if (bottomCard[numofbottom].Count == 2) //두장이상일때 선택
+                    {
+                        turnEndStates.Add(TurnEndState.D_SELECT_CARD);
+                        deckDrowCard = null;
+                    }
+
+                    else if (bottomCard[numofbottom].Count == 3)//뻑먹기 GET_BALK
+                    {
+                        if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
+                        {
+                            turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                            turnendPlayer.AddAcquiredCard(deckDrowCard);
+                            turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+                            deckDrowCard = null;
+                            bottomCard.RemoveAt(numofbottom);
+                            turnEndStates.Add(TurnEndState.GET_BALK);
+                        }
+                    }
+                    else if (bottomCard[numofbottom][0].Get_month() == deckDrowCard.Get_month())
+                    {
+                        turnendPlayer.AddAcquiredCard(deckDrowCard);
+                        turnendPlayer.AddAcquiredCard(bottomCard[numofbottom]);
+                        deckDrowCard = null;
+                        bottomCard.RemoveAt(numofbottom);
+                    }
+                }
+            }
+        }
+
+        if (deckDrowCard != null)
+        {
+            List<Card> ptr = new List<Card>();
+            ptr.Add(deckDrowCard);
+            bottomCard.Add(ptr);
+            deckDrowCard = null;
+        }
+
+        //싹쓸 CLEAR
+        if (bottomCard.Count == 0)
+        {
+            turnendPlayer.AddAcquiredCard(turnwaitPlayer.LosePI());
+            turnEndStates.Add(TurnEndState.CLEAR);
+        }
+
+        return turnEndStates;
+    }
 }
