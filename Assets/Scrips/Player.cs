@@ -5,14 +5,15 @@ using UnityEngine;
 public class Player
 {
     public string name;
-    private List<Bak> Bakstates; //현재상태를 저장(고박, 피박, 광박,멍박, 띠박)
-    private int score; //점수계산을 받아 입력받음
-    private int goNum; //플레이어 고 수
-    private bool[] shake;
-    private int multipleScore; //플레이어의 배수
-    private int piscore;
-    private List<Card> handCards; //현재 플레이어 손패
-    private List<List<Card>> acquiredCards; //먹은 카드들 분류(족보로 분류)
+    public List<Bak> Bakstates; //현재상태를 저장(고박, 피박, 광박,멍박, 띠박)
+    public int score; //점수계산을 받아 입력받음
+    public int goNum; //플레이어 고 수
+    public bool[] shake;
+    public int multipleScore; //플레이어의 배수
+    public int piscore;
+    public List<List<Card>> acquiredCards { get; } //먹은 카드들 분류(족보로 분류)
+
+    public List<Card> handCards { get; } //현재 플레이어 손패
 
     public Player(string _name)
     {
@@ -28,14 +29,7 @@ public class Player
         for (int i = 0; i < Jokbo.GetNames(typeof(Jokbo)).Length; i++) //족보별로 나두기위해 2차원배열을 사용
             acquiredCards.Add(new List<Card>());
     }
-    public int CalurateMultipleScore()
-    {
-
-        return multipleScore;
-    }
-    public List<Bak> Get_Bakstates() { return Bakstates; }
-
-    public void Set_Bakstates(List<Bak> _baks) { Bakstates = _baks; }
+     
 
     public Card LosePI() //패 빼앗길때
     {
@@ -71,7 +65,11 @@ public class Player
     {
         acquiredCards[(int)getCard.Get_jokbo()].Add(getCard);
     }
-    public List<List<Card>> Get_acquiredCards() { return acquiredCards; }
+   
+    public int Get_HandCardCount()
+    {
+        return handCards.Count;
+    }
 
     public void Delete_HandCard(Card card)
     {
@@ -85,17 +83,11 @@ public class Player
         }
     }
 
-    public string Get_name() { return name; }
-
-    public void Set_score(int _score) { score = _score; }
-    
-
-
-
-
-
-
-
+    public void CreateDummyCard()
+    {
+        Card dummy = new Card(13, Jokbo.PI, false, 1);
+        handCards.Add(dummy);
+    }
 
 }
 

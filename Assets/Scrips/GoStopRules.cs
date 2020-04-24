@@ -5,9 +5,10 @@ using UnityEngine;
 public class GoStopRules
 {
     //점수 계산
-    public List<SpecialCombo> CalcurateScore(List<List<Card>> playerAcquiredCards, out int playerScore)
+    public List<SpecialCombo> CalcurateScore(List<List<Card>> playerAcquiredCards, out int playerScore, out int piScore)
     {
         int score = 0;
+        int piscore = 0;
         List<SpecialCombo> combos = new List<SpecialCombo>();
         for (int numofjokbo = 0; numofjokbo < Jokbo.GetNames(typeof(Jokbo)).Length; numofjokbo++)
         {
@@ -70,7 +71,6 @@ public class GoStopRules
                     }
                     break;
                 case Jokbo.PI:
-                    int piscore = 0;
                     for (int piofnum = 0; piofnum < playerAcquiredCards[numofjokbo].Count; piofnum++)
                     {
                         if (playerAcquiredCards[numofjokbo][piofnum].Get_ssangpi())
@@ -98,6 +98,7 @@ public class GoStopRules
             score = TTIscore - 4;
         }
         playerScore = score;
+        piScore = piscore;
         return combos;
     }
 
@@ -173,6 +174,100 @@ public class GoStopRules
         return turnendPlayerBaks;
     }
 
+    public void playHandCardAddTobottomCard(List<Card> playHandCard, ref List<List<Card>> bottomCard)
+    {
+        if (playHandCard[0].Get_month() != 13 || playHandCard[0].Get_month() != 0)
+        {
+            for (int NumofbottomCard = 0; NumofbottomCard < bottomCard.Count; NumofbottomCard++)
+            {
+                if (bottomCard[NumofbottomCard][0].Get_month() == playHandCard[0].Get_month())
+                {
+                    for (int NumofplayHandCard = 0; NumofplayHandCard < playHandCard.Count; NumofplayHandCard++)
+                        bottomCard[NumofbottomCard].Add(playHandCard[NumofplayHandCard]);
+                }
+                else if (bottomCard.Count - 1 == NumofbottomCard)
+                {
+                    bottomCard.Add(playHandCard);
+                }
+            }
+        }
+        else if (playHandCard[0].Get_month() == 13)
+            bottomCard.Add(playHandCard);
+        else if (playHandCard[0].Get_month() == 0)
+            return;
+    }
+    private void SupportplayHandCardTobottomCard(List<Card> playHandCard, ref List<List<Card>> bottomCard, ref List<TurnEndState> turnEndStates)
+    {
+        if (playHandCard[0].Get_month() != 13 || playHandCard[0].Get_month() != 0)
+        {
+            for (int NumofbottomCard = 0; NumofbottomCard < bottomCard.Count; NumofbottomCard++)
+            {
+                if (bottomCard[NumofbottomCard][0].Get_month() == playHandCard[0].Get_month())
+                {
+                    for (int NumofplayHandCard = 0; NumofplayHandCard < playHandCard.Count; NumofplayHandCard++)
+                        bottomCard[NumofbottomCard].Add(playHandCard[NumofplayHandCard]);
+                }
+                else if (bottomCard.Count - 1 == NumofbottomCard)
+                {
+                    bottomCard.Add(playHandCard);
+                }
+            }
+        }
+        else if (playHandCard[0].Get_month() == 13)
+            bottomCard.Add(playHandCard);
+        else if (playHandCard[0].Get_month() == 0)
+            return;
+    }
+
+    public bool deckDrowCardAddTobottomCard(List<Card> playHandCard, Card deckDrowCard, ref List<List<Card>> bottomCard)
+    {
+        if (deckDrowCard.Get_month() != 13) //드로우카드 != 조커
+        {
+            for (int NumofbottomCard = 0; NumofbottomCard < bottomCard.Count; NumofbottomCard++)
+            {
+                if (bottomCard[NumofbottomCard][0].Get_month() == deckDrowCard.Get_month())
+                {
+                    bottomCard[NumofbottomCard].Add(deckDrowCard);
+                    return true;
+                }
+                else if (bottomCard.Count - 1 == NumofbottomCard)
+                {
+                    List<Card> ptr = new List<Card>();
+                    ptr.Add(deckDrowCard);
+                    bottomCard.Add(ptr);
+                    return true;
+                }
+            }
+        }
+
+        else if (deckDrowCard.Get_month() == 13) //드로우카드 == 조커
+        {
+            if (playHandCard[0].Get_month() != 0) //낸카드 != 더미카드
+                //내카드가 붙은곳으로 붙여야함
+            {
+                if (playHandCard[0].Get_month() != 13 || playHandCard[0].Get_month() != 0)
+                {
+                    for (int NumofbottomCard = 0; NumofbottomCard < bottomCard.Count; NumofbottomCard++)
+                    {
+                        if (bottomCard[NumofbottomCard][0].Get_month() == playHandCard[0].Get_month())
+                        {
+                            bottomCard[NumofbottomCard].Add(deckDrowCard);
+                            return false;
+                        }
+                    }
+                }
+            }
+            else if (playHandCard[0].Get_month() == 0) //낸카드 == 더미
+                //낸카드가 없으므로 바닥에 나둠 (나중에 회수)
+            {
+                List<Card> ptr = new List<Card>();
+                ptr.Add(deckDrowCard);
+                bottomCard.Add(ptr);
+                return false;
+            }
+        }
+        return true;
+    }
 
     public List<TurnEndState> TurnEndBottomCardsSet(Card playHandCard, Card deckDrowCard, ref Player turnendPlayer, ref Player turnwaitPlayer, ref List<List<Card>> bottomCard)
     //--두장이상일때 선택하게하기--
