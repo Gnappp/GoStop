@@ -34,6 +34,8 @@ public class GoStopManager : MonoBehaviour
     public GameObject playerClient2;
     private PlayerClient _playerClient2;
 
+    private int playCardPos;
+
     private List<Card> playHandCard_ptr =null;
     private List<Card> deckDrowCard_ptr = null;
     private int stillPiStack = 0;
@@ -46,46 +48,78 @@ public class GoStopManager : MonoBehaviour
         _playerClient1 = playerClient1.GetComponent<PlayerClient>();
     }
 
-    public void RequestSelectCard(Card playHandCard, string playername) //한장
+    public void RequestPlayCard(List<Card> playCard,Player playPlayer)
     {
         List<TurnEndState> turnEndStates = new List<TurnEndState>();
-        if (playHandCard.Get_month() != 13) //낸카드 != 조커 경우 일반적인 플레이
+        if (playCard[0].Get_month() != 13) //낸카드 != 조커 경우 일반적인 플레이
         {
-            playHandCard_ptr.Add(playHandCard);
-            if(playHandCard_ptr[0].Get_month() !=0) //낸카드 != 더미카드 경우 바닥카드에 추가하지 않는다.
-                rules.playHandCardAddTobottomCard(playHandCard_ptr, ref bottomCard);
-
-            Card deckDrowCard = DeckDrow();
-            while (!rules.deckDrowCardAddTobottomCard(playHandCard_ptr, deckDrowCard, ref bottomCard)) //제대로 된경우 return true 다시 드로우 return false
+            playCardPos = rules.playHandCardAddTobottomCard(playHandCard_ptr, ref bottomCard);
+            if(playCardPos !=99 && playCardPos != 98)
             {
-                deckDrowCard_ptr.Add(deckDrowCard);
-                deckDrowCard = DeckDrow();                
+                _playerClient1.RequirePlayCard(playCardPos,playCard);
+                _playerClient2.
             }
-            deckDrowCard_ptr.Add(deckDrowCard);
-
-            // 핸드카드와 드로우카드를 이용하여 먹을카드 체크후, 선택해야 할것이 있으면
-            // require를 보내 체크하고, 받으면 
         }
-
-        else if(playHandCard.Get_month() == 13) //낸카드 == 조커 드로우 진행하지 않음
+        else if (playCard[0].Get_month() == 13) //낸카드 == 조커 드로우 진행하지 않음
         {
-            if(playername == player1.name)
+            if (playPlayer.name == player1.name)
             {
-                playHandCardIsJOKER(ref player1, ref player2, playHandCard);
+                playHandCardIsJOKER(ref player1, ref player2, playCard[0]);
                 //SendPlayInfo(string na, List < Bak > baks, int sc, int goN, bool[] sh, int mul, int pis, List < List < Card >> ac, int hcc)
                 SendPlayInfo sendInfo = new SendPlayInfo(player2.name, player2.Bakstates, player2.score, player2.goNum, player2.shake, player2.multipleScore,
                     player2.piscore, player2.acquiredCards, player2.Get_HandCardCount());
-                _playerClient1.RequireFromManager(player1, sendInfo, null, null, true,null,null, 1);
+                _playerClient1.RequireFromManager(player1, sendInfo, null, null, true, null, null, 1);
             }
-            else if (playername == player2.name)
+            else if (playPlayer.name == player2.name)
             {
-                playHandCardIsJOKER(ref player2, ref player1, playHandCard);
+                playHandCardIsJOKER(ref player2, ref player1, playCard[0]);
                 SendPlayInfo sendInfo = new SendPlayInfo(player1.name, player1.Bakstates, player1.score, player1.goNum, player1.shake, player1.multipleScore,
                     player1.piscore, player1.acquiredCards, player1.Get_HandCardCount());
-                _playerClient2.RequireFromManager(player2, sendInfo, null, null, false,null,null, 1);
+                _playerClient2.RequireFromManager(player2, sendInfo, null, null, false, null, null, 1);
             }
         }
     }
+
+    //public void RequestSelectCard(Card playHandCard, string playername) //한장
+    //{
+    //    List<TurnEndState> turnEndStates = new List<TurnEndState>();
+    //    if (playHandCard.Get_month() != 13) //낸카드 != 조커 경우 일반적인 플레이
+    //    {
+    //        playHandCard_ptr.Add(playHandCard);
+    //        if (playHandCard_ptr[0].Get_month() != 0) //낸카드 != 더미카드 경우 바닥카드에 추가하지 않는다.
+    //            rules.playHandCardAddTobottomCard(playHandCard_ptr, ref bottomCard);
+    //    }
+    //        Card deckDrowCard = DeckDrow();
+    //        while (!rules.deckDrowCardAddTobottomCard(playHandCard_ptr, deckDrowCard, ref bottomCard)) //제대로 된경우 return true 다시 드로우 return false
+    //        {
+    //            deckDrowCard_ptr.Add(deckDrowCard);
+    //            deckDrowCard = DeckDrow();                
+    //        }
+    //        deckDrowCard_ptr.Add(deckDrowCard);
+
+    //        // 핸드카드와 드로우카드를 이용하여 먹을카드 체크후, 선택해야 할것이 있으면
+    //        // require를 보내 체크하고, 받으면 
+        
+
+    //    else if(playHandCard.Get_month() == 13) //낸카드 == 조커 드로우 진행하지 않음
+    //    {
+    //        if(playername == player1.name)
+    //        {
+    //            playHandCardIsJOKER(ref player1, ref player2, playHandCard);
+    //            //SendPlayInfo(string na, List < Bak > baks, int sc, int goN, bool[] sh, int mul, int pis, List < List < Card >> ac, int hcc)
+    //            SendPlayInfo sendInfo = new SendPlayInfo(player2.name, player2.Bakstates, player2.score, player2.goNum, player2.shake, player2.multipleScore,
+    //                player2.piscore, player2.acquiredCards, player2.Get_HandCardCount());
+    //            _playerClient1.RequireFromManager(player1, sendInfo, null, null, true,null,null, 1);
+    //        }
+    //        else if (playername == player2.name)
+    //        {
+    //            playHandCardIsJOKER(ref player2, ref player1, playHandCard);
+    //            SendPlayInfo sendInfo = new SendPlayInfo(player1.name, player1.Bakstates, player1.score, player1.goNum, player1.shake, player1.multipleScore,
+    //                player1.piscore, player1.acquiredCards, player1.Get_HandCardCount());
+    //            _playerClient2.RequireFromManager(player2, sendInfo, null, null, false,null,null, 1);
+    //        }
+    //    }
+    //}
 
     public void playHandCardIsJOKER(ref Player playCardPlayer, ref Player turnWaitPlayer,Card joker)
     {

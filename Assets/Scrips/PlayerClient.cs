@@ -18,6 +18,12 @@ public class PlayerClient : MonoBehaviour
 
     }
 
+    public void RequirePlayCard(int playCardPos,List<Card> playCard)
+    {
+        //코루틴으로 애니메이션이 끝난후
+        //RequestDrow 호출
+    }
+
     public void RequireSelcectCard(List<TurnEndState> turnEndStates)
     {
 

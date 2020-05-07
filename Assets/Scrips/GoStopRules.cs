@@ -174,7 +174,7 @@ public class GoStopRules
         return turnendPlayerBaks;
     }
 
-    public void playHandCardAddTobottomCard(List<Card> playHandCard, ref List<List<Card>> bottomCard)
+    public int playHandCardAddTobottomCard(List<Card> playHandCard, ref List<List<Card>> bottomCard)
     {
         if (playHandCard[0].Get_month() != 13 || playHandCard[0].Get_month() != 0)
         {
@@ -184,17 +184,20 @@ public class GoStopRules
                 {
                     for (int NumofplayHandCard = 0; NumofplayHandCard < playHandCard.Count; NumofplayHandCard++)
                         bottomCard[NumofbottomCard].Add(playHandCard[NumofplayHandCard]);
+                    return NumofbottomCard;
                 }
                 else if (bottomCard.Count - 1 == NumofbottomCard)
                 {
                     bottomCard.Add(playHandCard);
+                    return NumofbottomCard;
                 }
             }
         }
         else if (playHandCard[0].Get_month() == 13)
-            bottomCard.Add(playHandCard);
+            return 98;
         else if (playHandCard[0].Get_month() == 0)
-            return;
+            return 99;
+        return 99;
     }
     private void SupportplayHandCardTobottomCard(List<Card> playHandCard, ref List<List<Card>> bottomCard, ref List<TurnEndState> turnEndStates)
     {
